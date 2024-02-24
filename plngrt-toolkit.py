@@ -86,6 +86,7 @@ activator_data = [
 
 # Define data for the "MS Store" tab
 msstore_data = [
+    ("Install All App", "All", "Install", "data/script/all-install.ps1"),
     ("Install This First", "All", "Install", "data/script/requirement.ps1"),
     ("Microsoft Photos", "All", "Install", "data/script/install-photos.ps1"),
     ("Paint", "All", "Install", "data/script/install-paint.ps1"),
