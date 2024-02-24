@@ -1,0 +1,1 @@
+Add-AppxPackage -Path "data/script/ms-store/whatsapp.Msixbundle"
