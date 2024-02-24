@@ -19,5 +19,5 @@ pip install nuitka
 
 Then after nuitka installed, we can build the script with this command
 ```bash
-nuitka --onefile --windows-icon-from-ico="app icon 64x64.ico" plngrt-toolkit.py
+nuitka --enable-plugin=tk-inter --onefile --windows-icon-from-ico="app icon 64x64.ico" plngrt-toolkit.py
 ```
