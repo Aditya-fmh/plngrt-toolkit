@@ -21,3 +21,7 @@ Then after nuitka installed, we can build the script with this command
 ```bash
 nuitka --enable-plugin=tk-inter --onefile --windows-icon-from-ico="app icon 64x64.ico" plngrt-toolkit.py
 ```
+
+## App Preview
+
+![Preview 1](https://i.imgur.com/l6pepHz.png)
