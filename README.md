@@ -24,5 +24,4 @@ nuitka --enable-plugin=tk-inter --onefile --windows-icon-from-ico="app icon 64x6
 
 ## App Preview
 
-![Preview 1](https://i.imgur.com/l6pepHz.png)
-![Preview 2](https://i.imgur.com/CYqvpUi.png)
+![Preview 1](https://i.imgur.com/CYqvpUi.png)
