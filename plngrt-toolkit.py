@@ -143,6 +143,7 @@ msstore_data = [
     ("Whatsapp", "All", "Install", "data/script/install-whatsapp.ps1"),
     ("Windows Calculator", "All", "Install", "data/script/install-calculator.ps1"),
     ("Windows Camera", "All", "Install", "data/script/install-camera.ps1"),
+    ("Microsoft Store", "All", "Run", "data/script/Add-Store.cmd")
 ]
 
 # Define data for the "Win Updater" tab
