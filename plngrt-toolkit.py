@@ -9,6 +9,7 @@ import requests
 import tempfile
 import zipfile
 from tkinter import messagebox
+import threading
 
 # Function to perform installation or checking of the application
 def perform_action(application, action, architecture, executable_path):
@@ -49,45 +50,50 @@ def check_for_updates(current_version):
     return False, current_version, None
 
 def download_and_apply_update(download_url):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        update_file_path = os.path.join(temp_dir, "update.zip")  # Path to save the update within the temp directory
-        
-        print("Starting download...")
-        # Stream the download to track progress
-        response = requests.get(download_url, stream=True)
-        total_length = response.headers.get('content-length')
+    def download_and_extract():
+        with tempfile.TemporaryDirectory() as temp_dir:
+            update_file_path = os.path.join(temp_dir, "update.zip")
+            
+            print("Starting download...")
+            # Stream the download to track progress
+            response = requests.get(download_url, stream=True)
+            total_length = response.headers.get('content-length')
 
-        if total_length is None:  # No content length header
-            with open(update_file_path, 'wb') as f:
-                f.write(response.content)
-        else:
-            dl = 0
-            total_length = int(total_length)
-            with open(update_file_path, 'wb') as f:
-                for data in response.iter_content(chunk_size=4096):
-                    dl += len(data)
-                    f.write(data)
-                    done = int(50 * dl / total_length)
-                    # Convert bytes to MB for display
-                    dl_mb = dl / (1024 * 1024)
-                    total_length_mb = total_length / (1024 * 1024)
-                    print(f"\rDownloading: [{'=' * done}{' ' * (50-done)}] {dl_mb:.2f}/{total_length_mb:.2f} MB", end='')
+            if total_length is None:  # No content length header
+                with open(update_file_path, 'wb') as f:
+                    f.write(response.content)
+            else:
+                dl = 0
+                total_length = int(total_length)
+                with open(update_file_path, 'wb') as f:
+                    for data in response.iter_content(chunk_size=4096):
+                        dl += len(data)
+                        f.write(data)
+                        done = int(50 * dl / total_length)
+                        # Convert bytes to MB for display
+                        dl_mb = dl / (1024 * 1024)
+                        total_length_mb = total_length / (1024 * 1024)
+                        print(f"\rDownloading: [{'=' * done}{' ' * (50-done)}] {dl_mb:.2f}/{total_length_mb:.2f} MB", end='')
 
-        print("\nDownload completed. Starting extraction...")
+            print("\nDownload completed. Starting extraction...")
 
-        # Extract the ZIP file directly into the installation directory
-        install_directory = os.path.dirname(__file__)  # Assuming the current directory is the installation directory
-        with zipfile.ZipFile(update_file_path, 'r') as zip_ref:
-            # Simple progress tracking for extraction
-            extracted = 0
-            total_files = len(zip_ref.namelist())
-            for file in zip_ref.namelist():
-                zip_ref.extract(member=file, path=install_directory)
-                extracted += 1
-                print(f"\rExtracting: [{extracted}/{total_files} files]", end='')
-            print("\nExtraction completed successfully.")
+            # Extract the ZIP file directly into the installation directory
+            install_directory = os.path.dirname(__file__)  # Assuming the current directory is the installation directory
+            with zipfile.ZipFile(update_file_path, 'r') as zip_ref:
+                # Simple progress tracking for extraction
+                extracted = 0
+                total_files = len(zip_ref.namelist())
+                for file in zip_ref.namelist():
+                    zip_ref.extract(member=file, path=install_directory)
+                    extracted += 1
+                    print(f"\rExtracting: [{extracted}/{total_files} files]", end='')
+                print("\nExtraction completed successfully.")
 
-        print("Update downloaded and applied successfully.")
+            print("Update downloaded and applied successfully.")
+
+    # Create and start a new thread for the download and extraction process
+    download_thread = threading.Thread(target=download_and_extract)
+    download_thread.start()
 
 def main_update_check():
     current_version = "1.3"  # This should be dynamically determined based on your application's current version
