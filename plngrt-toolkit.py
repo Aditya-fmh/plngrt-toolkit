@@ -5,6 +5,9 @@ import os
 import webbrowser
 import sys
 import ctypes
+import requests
+import tempfile
+import zipfile
 
 # Function to perform installation or checking of the application
 def perform_action(application, action, architecture, executable_path):
@@ -25,6 +28,52 @@ def perform_action(application, action, architecture, executable_path):
                 subprocess.Popen(["start", "", executable_path], shell=True)
     except Exception as e:
         print(f"Error performing {action} for {application}: {str(e)}")
+
+def get_latest_release_info():
+    repo_url = "https://api.github.com/repos/Aditya-fmh/plngrt-toolkit/releases/latest"
+    try:
+        response = requests.get(repo_url)
+        latest_release = response.json()
+        return latest_release
+    except Exception as e:
+        print(f"Failed to get latest release info: {e}")
+        return None
+
+def check_for_updates(current_version):
+    latest_release = get_latest_release_info()
+    if latest_release:
+        latest_version = latest_release["tag_name"]
+        if latest_version > current_version:
+            return True, latest_version, latest_release["assets"][0]["browser_download_url"]
+    return False, current_version, None
+
+def download_and_apply_update(download_url):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        update_file_path = os.path.join(temp_dir, "update.zip")  # Path to save the update within the temp directory
+        
+        try:
+            # Download the update
+            response = requests.get(download_url)
+            with open(update_file_path, "wb") as file:
+                file.write(response.content)
+            
+            # Extract the ZIP file directly into the installation directory
+            install_directory = os.path.dirname(__file__)  # Assuming the current directory is the installation directory
+            with zipfile.ZipFile(update_file_path, 'r') as zip_ref:
+                zip_ref.extractall(install_directory)
+            
+            print("Update downloaded and applied successfully.")
+        except Exception as e:
+            print(f"Failed to download or apply update: {e}")
+
+def main_update_check():
+    current_version = "1.3"  # This should be dynamically determined based on your application's current version
+    update_available, latest_version, download_url = check_for_updates(current_version)
+    if update_available:
+        print(f"Update available: Version {latest_version}")
+        download_and_apply_update(download_url)
+    else:
+        print("Your application is up to date.")
 
 script_dir = os.path.dirname(__file__)
 data_path = os.path.join(script_dir, "data", "script", "activator.cmd")
@@ -243,3 +292,6 @@ display_data(center_frame_extdrv, extdrv_data)
 
 # Start the GUI main loop
 window.mainloop()
+
+# Check for updates on application start
+main_update_check()
