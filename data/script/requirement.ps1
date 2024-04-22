@@ -1,6 +1,0 @@
-Add-AppxPackage -Path "data/script/ms-store/req1.Appx"
-Add-AppxPackage -Path "data/script/ms-store/req2.Appx"
-Add-AppxPackage -Path "data/script/ms-store/req3.Appx"
-Add-AppxPackage -Path "data/script/ms-store/req4.Appx"
-Add-AppxPackage -Path "data/script/ms-store/req5.Appx"
-Add-AppxPackage -Path "data/script/ms-store/req6.Appx"

@@ -8,6 +8,7 @@ import ctypes
 import requests
 import tempfile
 import zipfile
+from tkinter import messagebox
 
 # Function to perform installation or checking of the application
 def perform_action(application, action, architecture, executable_path):
@@ -51,20 +52,42 @@ def download_and_apply_update(download_url):
     with tempfile.TemporaryDirectory() as temp_dir:
         update_file_path = os.path.join(temp_dir, "update.zip")  # Path to save the update within the temp directory
         
-        try:
-            # Download the update
-            response = requests.get(download_url)
-            with open(update_file_path, "wb") as file:
-                file.write(response.content)
-            
-            # Extract the ZIP file directly into the installation directory
-            install_directory = os.path.dirname(__file__)  # Assuming the current directory is the installation directory
-            with zipfile.ZipFile(update_file_path, 'r') as zip_ref:
-                zip_ref.extractall(install_directory)
-            
-            print("Update downloaded and applied successfully.")
-        except Exception as e:
-            print(f"Failed to download or apply update: {e}")
+        print("Starting download...")
+        # Stream the download to track progress
+        response = requests.get(download_url, stream=True)
+        total_length = response.headers.get('content-length')
+
+        if total_length is None:  # No content length header
+            with open(update_file_path, 'wb') as f:
+                f.write(response.content)
+        else:
+            dl = 0
+            total_length = int(total_length)
+            with open(update_file_path, 'wb') as f:
+                for data in response.iter_content(chunk_size=4096):
+                    dl += len(data)
+                    f.write(data)
+                    done = int(50 * dl / total_length)
+                    # Convert bytes to MB for display
+                    dl_mb = dl / (1024 * 1024)
+                    total_length_mb = total_length / (1024 * 1024)
+                    print(f"\rDownloading: [{'=' * done}{' ' * (50-done)}] {dl_mb:.2f}/{total_length_mb:.2f} MB", end='')
+
+        print("\nDownload completed. Starting extraction...")
+
+        # Extract the ZIP file directly into the installation directory
+        install_directory = os.path.dirname(__file__)  # Assuming the current directory is the installation directory
+        with zipfile.ZipFile(update_file_path, 'r') as zip_ref:
+            # Simple progress tracking for extraction
+            extracted = 0
+            total_files = len(zip_ref.namelist())
+            for file in zip_ref.namelist():
+                zip_ref.extract(member=file, path=install_directory)
+                extracted += 1
+                print(f"\rExtracting: [{extracted}/{total_files} files]", end='')
+            print("\nExtraction completed successfully.")
+
+        print("Update downloaded and applied successfully.")
 
 def main_update_check():
     current_version = "1.3"  # This should be dynamically determined based on your application's current version
@@ -159,6 +182,11 @@ extdrv_data = [
     ("HP Fn Key", "All", "Run", "data/driver/hp_fn_key.exe"),
 ]
 
+# Define data for the "About" tab
+about_data = [
+    ("Check for Updates", "All", "Run", "check_for_updates"),
+]
+
 # Create a new instance of the main window
 window = tk.Tk()
 window.title("PLNGRT Toolkit")
@@ -170,13 +198,14 @@ window.iconbitmap(default='icon.ico')
 notebook = ttk.Notebook(window)
 notebook.pack(fill=tk.BOTH, expand=True)  # Make the notebook fill the window
 
-# Create tabs for "Activator," "Checking," and "Standard" in this order
+# Create tabs for "Activator," "Checking," "Standard," "MS Store," "Win Updater," "Extra Driver," and now "About"
 activator_tab = ttk.Frame(notebook)
 checking_tab = ttk.Frame(notebook)
 standard_tab = ttk.Frame(notebook)
 msstore_tab = ttk.Frame(notebook)
 winupdate_tab = ttk.Frame(notebook)
 extdrv_tab = ttk.Frame(notebook)
+about_tab = ttk.Frame(notebook)  # New "About" tab
 
 notebook.add(activator_tab, text="Activator")
 notebook.add(checking_tab, text="Checking")
@@ -184,6 +213,7 @@ notebook.add(standard_tab, text="Standard")
 notebook.add(msstore_tab, text="MS Store")
 notebook.add(winupdate_tab, text="Win Updater")
 notebook.add(extdrv_tab, text="Extra Driver")
+notebook.add(about_tab, text="About")  # Adding the "About" tab to the notebook
 
 # Create a Frame within each tab to center the content
 center_frame_standard = ttk.Frame(standard_tab)
@@ -203,6 +233,9 @@ center_frame_winupdate.pack(fill=tk.BOTH, expand=True)
 
 center_frame_extdrv = ttk.Frame(extdrv_tab)
 center_frame_extdrv.pack(fill=tk.BOTH, expand=True)
+
+center_frame_about = ttk.Frame(about_tab)  # Frame for the "About" tab
+center_frame_about.pack(fill=tk.BOTH, expand=True)
 
 # Create a header row for each tab
 header_font = ("Helvetica", 12, "bold")
@@ -290,6 +323,24 @@ display_data(center_frame_activator, activator_data)
 display_data(center_frame_msstore, msstore_data)
 display_data(center_frame_winupdate, winupdate_data)
 display_data(center_frame_extdrv, extdrv_data)
+
+# Create a label and button for checking updates in the "About" tab
+about_label = ttk.Label(center_frame_about, text="Check for application updates")
+about_label.pack(pady=10)
+
+def on_check_for_updates():
+    current_version = "1.3.5" # This should be dynamically determined based on your application's current version
+    update_available, latest_version, download_url = check_for_updates(current_version)
+    if update_available:
+        print(f"Update available: Version {latest_version}")
+        user_response = messagebox.askyesno("Update Available", "An update is available. Would you like to download and apply it now?")
+        if user_response:
+            download_and_apply_update(download_url)
+    else:
+        print("Your application is up to date.")
+
+about_button = ttk.Button(center_frame_about, text="Check for Updates", command=on_check_for_updates)
+about_button.pack(pady=10)
 
 # Start the GUI main loop
 window.mainloop()
