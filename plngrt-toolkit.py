@@ -93,10 +93,11 @@ def download_and_apply_update(download_url):
 
     # Create and start a new thread for the download and extraction process
     download_thread = threading.Thread(target=download_and_extract)
+    download_thread.daemon = True
     download_thread.start()
 
 def main_update_check():
-    current_version = "1.3"  # This should be dynamically determined based on your application's current version
+    current_version = "1.3.5"  # This should be dynamically determined based on your application's current version
     update_available, latest_version, download_url = check_for_updates(current_version)
     if update_available:
         print(f"Update available: Version {latest_version}")
