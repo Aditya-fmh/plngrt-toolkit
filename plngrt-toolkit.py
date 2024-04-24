@@ -67,6 +67,9 @@ def download_and_apply_update(download_url):
                 total_length = int(total_length)
                 with open(update_file_path, 'wb') as f:
                     for data in response.iter_content(chunk_size=4096):
+                        if should_stop:
+                            print("Download stopped.")
+                            return  # Exit the function if stop flag is set
                         dl += len(data)
                         f.write(data)
                         done = int(50 * dl / total_length)
@@ -111,6 +114,7 @@ of_path = os.path.join(script_dir, "data", "script", "office-aio.bat")
 w10_path = os.path.join(script_dir, "data", "script", "win10.bat")
 w11_path = os.path.join(script_dir, "data", "script", "win11.bat")
 wsh_path = os.path.join(script_dir, "data", "script", "enable-wsh.bat")
+msstore_path = os.path.join(script_dir, "data", "script", "Add-Store.cmd")
 
 if getattr(sys, 'frozen', False):
     # If the script is compiled, set the icon for the executable
@@ -173,7 +177,7 @@ msstore_data = [
     ("Whatsapp", "All", "Install", "data/script/install-whatsapp.ps1"),
     ("Windows Calculator", "All", "Install", "data/script/install-calculator.ps1"),
     ("Windows Camera", "All", "Install", "data/script/install-camera.ps1"),
-    ("Microsoft Store", "All", "Install", "data/script/Add-Store.cmd")
+    ("Microsoft Store", "All", "Install", msstore_path)
 ]
 
 # Define data for the "Win Updater" tab
@@ -191,7 +195,7 @@ extdrv_data = [
 
 # Define data for the "About" tab
 about_data = [
-    ("Check for Updates", "All", "Run", "check_for_updates"),
+    ("Check for Updates", "", "Run", "check_for_updates"),
 ]
 
 # Create a new instance of the main window
@@ -336,7 +340,7 @@ about_label = ttk.Label(center_frame_about, text="Check for application updates"
 about_label.pack(pady=10)
 
 def on_check_for_updates():
-    current_version = "1.3.5" # This should be dynamically determined based on your application's current version
+    current_version = "1.5" # This should be dynamically determined based on your application's current version
     update_available, latest_version, download_url = check_for_updates(current_version)
     if update_available:
         print(f"Update available: Version {latest_version}")
@@ -354,3 +358,13 @@ window.mainloop()
 
 # Check for updates on application start
 main_update_check()
+
+# Global flag to control the download process
+should_stop = False
+
+def on_close():
+    global should_stop
+    should_stop = True
+    window.destroy()
+
+window.protocol("WM_DELETE_WINDOW", on_close)
